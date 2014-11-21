@@ -42,7 +42,7 @@ ext_id = {
 # 20 - Scala 2.11
 # 34 - JavaScript V8 3
 
-if len(sys.argv[1]) < 2:
+if len(sys.argv) < 2:
     print("Solution filename not specified")
     sys.exit()
 
