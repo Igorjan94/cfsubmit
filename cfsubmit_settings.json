@@ -1,0 +1,36 @@
+{
+  "X-User"    : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "CSRF-Token": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
+  "CF-Domain" : "ru",
+  "Ext-ID": {
+    "cpp" :  "16",
+    "cs"  :  "29",
+    "go"  :  "32",
+    "java":  "36",
+    "py"  :  "31"
+  },
+  "_cf_id_codes_just_for_info": {
+    "10": "GNU C 4",
+    "1" : "GNU C++ 4.7",
+    "16": "GNU C++0x 4",
+    "2" : "Microsoft Visual C++ 2010",
+    "9" : "C# Mono 2.10",
+    "29": "MS C# .NET 4",
+    "28": "D DMD32 Compiler v2",
+    "32": "Go 1.2",
+    "12": "Haskell GHC 7.6",
+    "5" : "Java 6",
+    "23": "Java 7",
+    "36": "Java 8",
+    "19": "OCaml 4",
+    "3" : "Delphi 7",
+    "4" : "Free Pascal 2",
+    "13": "Perl 5.12",
+    "6" : "PHP 5.3",
+    "7" : "Python 2.7",
+    "31": "Python 3.3",
+    "8" : "Ruby 2",
+    "20": "Scala 2.11",
+    "34": "JavaScript V8 3"
+  }
+}
