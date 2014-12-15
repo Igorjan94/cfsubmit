@@ -10,6 +10,7 @@ Set up ```$GOPATH``` environment variable and make sure ```$GOPATH/bin``` is in 
 If you don't want to install golang, use [gobuild.io](http://gobuild.io/) or similar service.
 
 ### Installation ###
+```go get github.com/cnt0/cfsubmit```  
 ```go install github.com/cnt0/cfsubmit```
 
 ### Setup ###
