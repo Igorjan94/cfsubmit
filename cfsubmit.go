@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
@@ -13,10 +15,18 @@ import (
 	"unicode"
 )
 
+const settingsFileName = "cfsubmit_settings.json"
+
 var (
 	contestId string
 	problemId string
 	langId    string
+)
+
+var (
+	errNoSubmission    = errors.New("Submission file not specified")
+	errUnkownExt       = errors.New("Unknown extension")
+	errUnknownFilename = errors.New("Unknown filename format. Example: 123a.cpp")
 )
 
 var CFAuthData struct {
@@ -28,7 +38,7 @@ var CFAuthData struct {
 
 func init() {
 	//load settings from json
-	if jsonData, err := os.Open("cfsubmit_settings.json"); err != nil {
+	if jsonData, err := os.Open(settingsFileName); err != nil {
 		log.Fatal(err)
 	} else {
 		if err := json.NewDecoder(jsonData).Decode(&CFAuthData); err != nil {
@@ -37,83 +47,74 @@ func init() {
 	}
 
 	if len(os.Args) < 2 {
-		log.Fatal("Submission file not specified")
+		log.Fatal(errNoSubmission)
 	}
 
 	//parse lang id
 	if ext := path.Ext(os.Args[1]); len(ext) == 0 {
-		log.Fatal("Unknown extension")
+		log.Fatal(errUnkownExt)
 	} else {
-		id, ok := CFAuthData.ExtId[strings.ToLower(ext[1:])]
-		if !ok {
-			log.Fatal("Unknown extension")
+		if id, ok := CFAuthData.ExtId[strings.ToLower(ext[1:])]; !ok {
+			log.Fatal(errUnkownExt)
+		} else {
+			langId = id
 		}
-		langId = id
 	}
 
 	//parse contest id & problem id
-	cId, pId := []rune{}, []rune{}
-
-	var idx int
-	var c rune
-	for idx, c = range path.Base(os.Args[1]) {
-		if unicode.IsDigit(c) {
-			cId = append(cId, c)
-		} else {
-			break
-		}
+	filename := path.Base(os.Args[1])
+	idx1 := strings.IndexFunc(filename, func(r rune) bool { return !unicode.IsDigit(r) })
+	if idx1 == -1 {
+		log.Fatal(errUnknownFilename)
 	}
-	for _, c = range path.Base(os.Args[1])[idx:] {
-		if c != '.' {
-			pId = append(pId, c)
-		} else {
-			break
-		}
+	idx2 := strings.Index(filename, ".")
+	if idx2 == -1 {
+		log.Fatal(errUnknownFilename)
 	}
 
-	problemId = strings.ToUpper(string(pId))
-	contestId = strings.ToUpper(string(cId))
+	problemId = strings.ToUpper(filename[:idx1])
+	contestId = strings.ToUpper(filename[idx1:idx2])
 
 	if len(problemId) == 0 || len(contestId) == 0 {
-		log.Fatal("Unknown submission filename format")
+		log.Fatal(errUnknownFilename)
 	}
 }
 
-func main() {
+func createMultipartForm() (io.Reader, string, error) {
+	solutionText, err := ioutil.ReadFile(os.Args[1])
+	if err != nil {
+		return nil, "", err
+	}
 
-	//prepare multipart form for http request
+	//multipart form field: name - value
+	formFields := [][]string{
+		[]string{"csrf_token", CFAuthData.CSRF},
+		[]string{"action", "submitSolutionFormSubmitted"},
+		[]string{"submittedProblemIndex", problemId},
+		[]string{"programTypeId", langId},
+		[]string{"sourceFile", ""},
+		[]string{"_tta", "222"},
+		[]string{"source", string(solutionText)},
+	}
+
+	//cause butes.Buffer implements both io.Reader and io.Writer
 	var b bytes.Buffer
-	mw := multipart.NewWriter(&b)
+	formWriter := multipart.NewWriter(&b)
 
-	if err := mw.WriteField("csrf_token", CFAuthData.CSRF); err != nil {
-		log.Fatal(err)
-	}
-	if err := mw.WriteField("action", "submitSolutionFormSubmitted"); err != nil {
-		log.Fatal(err)
-	}
-	if err := mw.WriteField("submittedProblemIndex", problemId); err != nil {
-		log.Fatal(err)
-	}
-	if err := mw.WriteField("programTypeId", langId); err != nil {
-		log.Fatal(err)
-	}
-	if err := mw.WriteField("sourceFile", ""); err != nil {
-		log.Fatal(err)
-	}
-	if err := mw.WriteField("_tta", "222"); err != nil {
-		log.Fatal(err)
-	}
-
-	if sol, err := ioutil.ReadFile(os.Args[1]); err != nil {
-		log.Fatal(err)
-	} else {
-		if err := mw.WriteField("source", string(sol)); err != nil {
-			log.Fatal(err)
+	for _, field := range formFields {
+		if err := formWriter.WriteField(field[0], field[1]); err != nil {
+			return nil, "", err
 		}
 	}
-	if err := mw.Close(); err != nil {
-		log.Fatal(err)
+
+	if err := formWriter.Close(); err != nil {
+		return nil, "", err
 	}
+
+	return &b, formWriter.Boundary(), nil
+}
+
+func main() {
 
 	//request url
 	reqUrl := "http://codeforces." + CFAuthData.CFDomain +
@@ -121,12 +122,20 @@ func main() {
 		"/problem/" + problemId +
 		"?csrf_token=" + CFAuthData.CSRF
 
-	req, err := http.NewRequest("POST", reqUrl, &b)
+	//get request body data; boundary for header
+	form, boundary, err := createMultipartForm()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req.Header.Set("Content-Type", "multipart/form-data; boundary="+mw.Boundary())
+	//ok, construct request
+	req, err := http.NewRequest("POST", reqUrl, form)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//add required headers and cookies
+	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	req.AddCookie(&http.Cookie{Name: "X-User", Value: CFAuthData.XUser})
 
 	//send request
@@ -134,6 +143,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	//maube success
+	//maybe success
 	log.Println("Solution sent. Check result in CF website")
 }
