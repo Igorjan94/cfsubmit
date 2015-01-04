@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"strings"
-	"unicode"
 )
 
 const settingsFileName = "cfsubmit_settings.json"
@@ -25,8 +25,12 @@ var (
 
 var (
 	errNoSubmission    = errors.New("Submission file not specified")
-	errUnkownExt       = errors.New("Unknown extension")
+	errUnkownExt       = errors.New("Unknown extension. Ext must be in lowercase in your settings file")
 	errUnknownFilename = errors.New("Unknown filename format. Example: 123a.cpp")
+)
+
+var (
+	cfSubmissionFileRegex = regexp.MustCompile(`(\d+)(\w+)\.(\w+)`)
 )
 
 var CFAuthData struct {
@@ -50,33 +54,17 @@ func init() {
 		log.Fatal(errNoSubmission)
 	}
 
-	//parse lang id
-	if ext := path.Ext(os.Args[1]); len(ext) == 0 {
+	//matches: [0, contestId, problemId, extId]
+	matches := cfSubmissionFileRegex.FindStringSubmatch(path.Base(os.Args[1]))
+	if len(matches) < 4 {
+		log.Fatal(errUnknownFilename)
+	}
+	contestId = matches[1]
+	problemId = strings.ToUpper(matches[2])
+	if l, ok := CFAuthData.ExtId[strings.ToLower(matches[3])]; !ok {
 		log.Fatal(errUnkownExt)
 	} else {
-		if id, ok := CFAuthData.ExtId[strings.ToLower(ext[1:])]; !ok {
-			log.Fatal(errUnkownExt)
-		} else {
-			langId = id
-		}
-	}
-
-	//parse contest id & problem id
-	filename := path.Base(os.Args[1])
-	idx1 := strings.IndexFunc(filename, func(r rune) bool { return !unicode.IsDigit(r) })
-	if idx1 == -1 {
-		log.Fatal(errUnknownFilename)
-	}
-	idx2 := strings.Index(filename, ".")
-	if idx2 == -1 {
-		log.Fatal(errUnknownFilename)
-	}
-
-	problemId = strings.ToUpper(filename[:idx1])
-	contestId = strings.ToUpper(filename[idx1:idx2])
-
-	if len(problemId) == 0 || len(contestId) == 0 {
-		log.Fatal(errUnknownFilename)
+		langId = l
 	}
 }
 
@@ -97,7 +85,7 @@ func createMultipartForm() (io.Reader, string, error) {
 		[]string{"source", string(solutionText)},
 	}
 
-	//cause butes.Buffer implements both io.Reader and io.Writer
+	//cause bytes.Buffer implements both io.Reader and io.Writer
 	var b bytes.Buffer
 	formWriter := multipart.NewWriter(&b)
 
@@ -115,7 +103,6 @@ func createMultipartForm() (io.Reader, string, error) {
 }
 
 func main() {
-
 	//request url
 	reqUrl := "http://codeforces." + CFAuthData.CFDomain +
 		"/contest/" + contestId +
@@ -144,5 +131,5 @@ func main() {
 	}
 
 	//maybe success
-	log.Println("Solution sent. Check result in CF website")
+	log.Println("Solution sent.")
 }
