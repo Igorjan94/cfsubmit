@@ -11,7 +11,9 @@ If you don't want to install golang, use [gobuild.io](http://gobuild.io/) or sim
 
 ### Installation ###
 ```go get github.com/cnt0/cfsubmit```  
-```go install github.com/cnt0/cfsubmit```
+```go install github.com/cnt0/cfsubmit/...```
+
+(Yes, this ```/...``` is mandatory)
 
 ### Setup ###
 Place ```cfsubmit_settings.json``` into your working directory and open it.
@@ -26,3 +28,16 @@ Edit ```Ext-ID``` to set up your favorite codeforces compiler for each file exte
 
 ### Usage ###
 ```cfsubmit 123a.cpp```
+
+cfmanage
+========
+
+Organize your submission files
+
+### CLI Options ###
+- ```-a```   arhive old submissions into one folder per contest; dominates -z flag
+- ```-z```   arhive old submissions into one gzip file per contest
+- ```-c```   create empty templates for contest; existing files will be rewritten
+- ```-cnt``` how many templates will be created (at most 26, default: 5)
+- ```-t```   which file will be used as base template (default: empty)
+
