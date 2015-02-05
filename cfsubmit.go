@@ -8,7 +8,7 @@ import (
 
 var ErrUnknownFilename = errors.New("Unknown filename format. Example: 123a.cpp")
 
-var cfSubmissionFileRegex = regexp.MustCompile(`(\d+)(\w+)\.(\w+)`)
+var cfSubmissionFileRegex = regexp.MustCompile(`^(\d+)(\w+)\.(\w+)`)
 
 type CFSubmissionFile struct {
 	ProblemID string

@@ -14,11 +14,6 @@ import (
 	"github.com/cnt0/cfsubmit"
 )
 
-//flags:
-// -a - archive into folder
-// -az - archive into gzip
-// -c=id --count=5 --template=template.ext - create idA.ext, idB.ext, ..., idCount.ext
-
 const (
 	defaultContest  = "" //dont create contest
 	defaultCount    = 5
@@ -177,5 +172,7 @@ func main() {
 			fmt.Println(err)
 		}
 	}
-	CreateTemplates()
+	if err := CreateTemplates(); err != nil {
+		fmt.Println(err)
+	}
 }
