@@ -2,23 +2,28 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
+	"time"
 
 	"github.com/cnt0/cfsubmit"
 )
 
 const settingsFileName = "cfsubmit_settings.json"
 
+const (
+	TimeLimitSeconds = 60
+)
+
 var (
-	contestId string
+	contestId int
 	problemId string
 	langId    string
 )
@@ -28,36 +33,33 @@ var (
 	errUnkownExt    = errors.New("Unknown extension. Ext must be in lowercase in your settings file")
 )
 
-var CFAuthData struct {
-	XUser    string            `json:"X-User"`
-	CSRF     string            `json:"CSRF-Token"`
-	ExtId    map[string]string `json:"Ext-ID"`
-	CFDomain string            `json:"CF-Domain"`
-}
+var CFAuthData *cfsubmit.CFSettings
 
 func init() {
 	//load settings from json
-	if jsonData, err := os.Open(settingsFileName); err != nil {
-		log.Fatal(err)
-	} else {
-		if err := json.NewDecoder(jsonData).Decode(&CFAuthData); err != nil {
-			log.Fatal(err)
-		}
+	var err error
+	CFAuthData, err = cfsubmit.ReadSettings()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
 	}
 
 	if len(os.Args) < 2 {
-		log.Fatal(errNoSubmission)
+		fmt.Println(errNoSubmission)
+		os.Exit(0)
 	}
 
-	submission, err := cfsubmit.New(path.Base(os.Args[1]))
+	submission, err := cfsubmit.NewSubmission(path.Base(os.Args[1]))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(0)
 	}
 
 	contestId = submission.ContestID
-	problemId = submission.ProblemID
-	if l, ok := CFAuthData.ExtId[submission.Extension]; !ok {
-		log.Fatal(errUnkownExt)
+	problemId = submission.Problem.Index
+	if l, ok := CFAuthData.ExtId[submission.ProgrammingLanguage]; !ok {
+		fmt.Println(errUnkownExt)
+		os.Exit(0)
 	} else {
 		langId = l
 	}
@@ -100,31 +102,89 @@ func createMultipartForm() (io.Reader, string, error) {
 func main() {
 	//request url
 	reqUrl := "http://codeforces." + CFAuthData.CFDomain +
-		"/contest/" + contestId +
+		"/contest/" + strconv.Itoa(contestId) +
 		"/problem/" + problemId +
 		"?csrf_token=" + CFAuthData.CSRF
 
 	//get request body data; boundary for header
 	form, boundary, err := createMultipartForm()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(0)
 	}
 
 	//ok, construct request
 	req, err := http.NewRequest("POST", reqUrl, form)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(0)
 	}
 
 	//add required headers and cookies
 	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	req.AddCookie(&http.Cookie{Name: "X-User", Value: CFAuthData.XUser})
 
+	var oldId int
+	if CFAuthData.CheckResults {
+		submissions, err := cfsubmit.UserStatus(CFAuthData.Handle, 5)
+		if err != nil {
+			fmt.Println("Your solution has not been submitted")
+			if err == cfsubmit.ErrNoSuchUser {
+				fmt.Println("Incorrect handle in cfsubmit_settings.json. Please fix it and resubmit your solution")
+			} else {
+				fmt.Println(err.Error())
+			}
+			os.Exit(0)
+		}
+		for _, s := range submissions {
+			if s.ContestID == contestId && s.Problem.Index == problemId {
+				oldId = s.ID
+				break
+			}
+		}
+	}
+
 	//send request
 	if _, err := http.DefaultClient.Do(req); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(0)
 	}
 
 	//maybe success
-	log.Println("Solution sent.")
+	if CFAuthData.CheckResults {
+		for i := 0; i < TimeLimitSeconds; i++ {
+			select {
+			case <-time.After(time.Second):
+				submissions, err := cfsubmit.UserStatus(CFAuthData.Handle, 5)
+				if err == nil {
+					for _, s := range submissions {
+						if s.ContestID == contestId && s.Problem.Index == problemId {
+
+							if s.ID == oldId {
+								fmt.Print(".")
+								break
+							}
+
+							if s.Verdict != cfsubmit.VerTesting && s.Verdict != cfsubmit.VerMissing {
+								fmt.Printf("\nVerdict: %s | Test: %d | Time: %s | Memory: %s",
+									s.Verdict,
+									s.PassedTestCount+1,
+									s.TimeConsumed.String(),
+									s.MemoryConsumed.String())
+								os.Exit(0)
+							} else {
+								fmt.Print(".")
+								break
+							}
+						}
+					}
+				} else {
+					fmt.Print(".")
+				}
+			}
+		}
+		fmt.Println("\nToo long testing, I'll exit now. Please check results manually")
+	} else {
+		fmt.Println("Solution sent.")
+	}
 }
