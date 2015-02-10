@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 
 	"github.com/cnt0/cfsubmit"
 )
@@ -33,9 +34,9 @@ var (
 func ArchiveSubmissions(dir string) error {
 	return filepath.Walk(dir, func(path1 string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			if submission, err := cfsubmit.New(info.Name()); err == nil {
-				os.Mkdir(submission.ContestID, os.ModeDir|os.ModePerm)
-				os.Rename(info.Name(), path.Join(submission.ContestID, info.Name()))
+			if submission, err := cfsubmit.NewSubmission(info.Name()); err == nil {
+				os.Mkdir(strconv.Itoa(submission.ContestID), os.ModeDir|os.ModePerm)
+				os.Rename(info.Name(), path.Join(strconv.Itoa(submission.ContestID), info.Name()))
 			}
 		}
 		return nil
@@ -44,12 +45,12 @@ func ArchiveSubmissions(dir string) error {
 
 func ArchiveSubmissionsTGZ(dir string) error {
 
-	buffers := make(map[string]*bytes.Buffer)
-	tarWriters := make(map[string]*tar.Writer)
+	buffers := make(map[int]*bytes.Buffer)
+	tarWriters := make(map[int]*tar.Writer)
 
 	err := filepath.Walk(dir, func(path1 string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			if submission, err := cfsubmit.New(info.Name()); err == nil {
+			if submission, err := cfsubmit.NewSubmission(info.Name()); err == nil {
 
 				body, err := ioutil.ReadFile(info.Name())
 				if err != nil {
@@ -91,8 +92,8 @@ func ArchiveSubmissionsTGZ(dir string) error {
 			return err
 		}
 	}
-	for str, buf := range buffers {
-		fout, err := os.Create(str + ".tar.gz")
+	for cId, buf := range buffers {
+		fout, err := os.Create(strconv.Itoa(cId) + ".tar.gz")
 		if err != nil {
 			return err
 		}
