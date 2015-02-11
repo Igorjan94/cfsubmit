@@ -124,25 +124,7 @@ func main() {
 	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	req.AddCookie(&http.Cookie{Name: "X-User", Value: CFAuthData.XUser})
 
-	var oldId int
-	if CFAuthData.CheckResults {
-		submissions, err := cfsubmit.UserStatus(CFAuthData.Handle, 5)
-		if err != nil {
-			fmt.Println("Your solution has not been submitted")
-			if err == cfsubmit.ErrNoSuchUser {
-				fmt.Println("Incorrect handle in cfsubmit_settings.json. Please fix it and resubmit your solution")
-			} else {
-				fmt.Println(err.Error())
-			}
-			os.Exit(0)
-		}
-		for _, s := range submissions {
-			if s.ContestID == contestId && s.Problem.Index == problemId {
-				oldId = s.ID
-				break
-			}
-		}
-	}
+	timeNow := time.Now()
 
 	//send request
 	if _, err := http.DefaultClient.Do(req); err != nil {
@@ -150,8 +132,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	fmt.Print("Solution sent.")
+
 	//maybe success
 	if CFAuthData.CheckResults {
+		fmt.Print(" Please wait for results...")
 		for i := 0; i < TimeLimitSeconds; i++ {
 			select {
 			case <-time.After(time.Second):
@@ -160,15 +145,15 @@ func main() {
 					for _, s := range submissions {
 						if s.ContestID == contestId && s.Problem.Index == problemId {
 
-							if s.ID == oldId {
+							if timeNow.After(time.Time(s.CreationTime)) {
 								fmt.Print(".")
 								break
 							}
 
 							if s.Verdict != cfsubmit.VerTesting && s.Verdict != cfsubmit.VerMissing {
-								fmt.Printf("\nVerdict: %s | Test: %d | Time: %s | Memory: %s",
+								fmt.Printf("\nVerdict: %s | Tests passed: %d | Time: %s | Memory: %s",
 									s.Verdict,
-									s.PassedTestCount+1,
+									s.PassedTestCount,
 									s.TimeConsumed.String(),
 									s.MemoryConsumed.String())
 								os.Exit(0)
@@ -184,7 +169,6 @@ func main() {
 			}
 		}
 		fmt.Println("\nToo long testing, I'll exit now. Please check results manually")
-	} else {
-		fmt.Println("Solution sent.")
 	}
+	fmt.Println()
 }

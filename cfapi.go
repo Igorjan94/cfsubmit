@@ -164,5 +164,8 @@ func UserStatus(handle string, count int) ([]Submission, error) {
 	if Submissions.Status != "OK" {
 		return nil, ErrNoSuchUser
 	}
+	for i := range Submissions.Result {
+		Submissions.Result[i].TimeConsumed *= 1000
+	}
 	return Submissions.Result, nil
 }
