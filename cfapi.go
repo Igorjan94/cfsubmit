@@ -71,8 +71,10 @@ const (
 	TestSetTests10    = "TESTS10"
 )
 
+//custom int64 type with pretty print function; just like time.Duration for memory
 type MemoryAmount int64
 
+//String representation of memory amount in bytes, kilobytes or megabytes
 func (m MemoryAmount) String() string {
 	if m < 1024 {
 		return strconv.FormatInt(int64(m), 10) + "b"
@@ -87,6 +89,7 @@ func (m MemoryAmount) String() string {
 	}
 }
 
+//CF API Problem object; see http://codeforces.com/api/help/objects#Problem
 type Problem struct {
 	ContestID int      `json:"contestId"`
 	Index     string   `json:"index"`
@@ -96,10 +99,12 @@ type Problem struct {
 	Tags      []string `json:"tags"`
 }
 
+//CF API Member object; see http://codeforces.com/api/help/objects#Member
 type Member struct {
 	Handle string `json:"handle"`
 }
 
+//CF API Party object; see http://codeforces.com/api/help/objects#Party
 type Party struct {
 	ContestID       int       `json:"contestId"`
 	Members         []Member  `json:"members"`
@@ -110,6 +115,7 @@ type Party struct {
 	StartTime       EpochTime `json:"startTimeSeconds"`
 }
 
+//CF API Submission object; see http://codeforces.com/api/help/objects#Submission
 type Submission struct {
 	ID                  int           `json:"id"`
 	ContestID           int           `json:"contestId"`
@@ -125,6 +131,8 @@ type Submission struct {
 	MemoryConsumed      MemoryAmount  `json:"memoryConsumedBytes"`
 }
 
+//Parse submission ContestID, Problem.Index and ProgrammingLanguage from given filename
+//Filename should be in standart format like "123a.cpp"
 func NewSubmission(filename string) (*Submission, error) {
 	matches := cfSubmissionFileRegex.FindStringSubmatch(filename)
 	if len(matches) < 4 {
@@ -143,6 +151,7 @@ func NewSubmission(filename string) (*Submission, error) {
 	return &s, nil
 }
 
+//Get last $n$ user submissions; see http://codeforces.com/api/help/methods#user.status
 func UserStatus(handle string, count int) ([]Submission, error) {
 	var Submissions struct {
 		Status string       `json:"status"`
@@ -164,8 +173,12 @@ func UserStatus(handle string, count int) ([]Submission, error) {
 	if Submissions.Status != "OK" {
 		return nil, ErrNoSuchUser
 	}
+
+	//multiply TimeConsumed by 1'000'000 because it's in milliseconds,
+	//and time.Duration should be in nanoseconds
+
 	for i := range Submissions.Result {
-		Submissions.Result[i].TimeConsumed *= 1000
+		Submissions.Result[i].TimeConsumed *= 1000000
 	}
 	return Submissions.Result, nil
 }

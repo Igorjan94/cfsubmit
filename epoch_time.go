@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+//time.Time object; can be unmarshalled from JSON given an unix epoch time
+//See https://groups.google.com/forum/#!topic/golang-nuts/FozkbHiSP6M
 type EpochTime time.Time
 
 func (t *EpochTime) UnmarshalJSON(b []byte) error {
@@ -12,6 +14,6 @@ func (t *EpochTime) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = EpochTime(time.Unix(result/1000, 0))
+	*t = EpochTime(time.Unix(result, 0))
 	return nil
 }

@@ -125,6 +125,7 @@ func main() {
 	req.AddCookie(&http.Cookie{Name: "X-User", Value: CFAuthData.XUser})
 
 	timeNow := time.Now()
+	fmt.Printf("Now: %v\n", timeNow)
 
 	//send request
 	if _, err := http.DefaultClient.Do(req); err != nil {
@@ -134,41 +135,54 @@ func main() {
 
 	fmt.Print("Solution sent.")
 
-	//maybe success
+	//check results
 	if CFAuthData.CheckResults {
 		fmt.Print(" Please wait for results...")
+
 		for i := 0; i < TimeLimitSeconds; i++ {
 			select {
 			case <-time.After(time.Second):
+
+				//check out your last 5 submissions and search the first one with
+				//given vontestId and problemId
 				submissions, err := cfsubmit.UserStatus(CFAuthData.Handle, 5)
 				if err == nil {
 					for _, s := range submissions {
 						if s.ContestID == contestId && s.Problem.Index == problemId {
 
+							//this was sent before current cfsubmit run; no need to check it
 							if timeNow.After(time.Time(s.CreationTime)) {
 								fmt.Print(".")
 								break
 							}
 
 							if s.Verdict != cfsubmit.VerTesting && s.Verdict != cfsubmit.VerMissing {
-								fmt.Printf("\nVerdict: %s | Tests passed: %d | Time: %s | Memory: %s",
+
+								//ok, we've got some useful verdict
+								fmt.Printf("\nVerdict: %s | Tests passed: %d | Time: %s | Memory: %s\n",
 									s.Verdict,
 									s.PassedTestCount,
 									s.TimeConsumed.String(),
 									s.MemoryConsumed.String())
 								os.Exit(0)
 							} else {
+
+								//still testing, wait...
 								fmt.Print(".")
 								break
 							}
 						}
 					}
 				} else {
-					fmt.Print(".")
+
+					//Error like incorrect username or missing connection; no reason to wait anything
+					fmt.Println(err)
+					os.Exit(0)
 				}
 			}
 		}
-		fmt.Println("\nToo long testing, I'll exit now. Please check results manually")
+		fmt.Println("\nToo long testing, I'll exit now. Please check results manually\n")
+	} else {
+		fmt.Println()
 	}
-	fmt.Println()
 }
