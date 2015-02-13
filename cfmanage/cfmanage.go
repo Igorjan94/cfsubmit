@@ -24,12 +24,12 @@ const (
 )
 
 var (
-	updateCodesFlag bool
-	archiveFlag     bool
-	gzipFlag        bool
-	contestFlag     string
-	countFlag       int
-	templateFlag    string
+	updateSettingsFlag bool
+	archiveFlag        bool
+	gzipFlag           bool
+	contestFlag        string
+	countFlag          int
+	templateFlag       string
 )
 
 func ArchiveSubmissions(dir string) error {
@@ -156,7 +156,7 @@ func init() {
 	flag.StringVar(&contestFlag, "c", defaultContest, "create empty templates for contest; existing files will be rewritten")
 	flag.IntVar(&countFlag, "cnt", defaultCount, "how many templates will be created (at most 26)")
 	flag.StringVar(&templateFlag, "t", defaultTemplate, "which file will be used as base template")
-	flag.BoolVar(&updateCodesFlag, "update-codes", false, "update language codes in cfsubmit_settings.json")
+	flag.BoolVar(&updateSettingsFlag, "update-settings", false, "add missing fields and update language codes in cfsubmit_settings.json")
 
 	flag.Parse()
 }
@@ -168,8 +168,8 @@ func main() {
 		return
 	}
 
-	if updateCodesFlag {
-		if err := cfsubmit.UpdateIdCodes(); err != nil {
+	if updateSettingsFlag {
+		if err := cfsubmit.UpdateSettings(); err != nil {
 			log.Fatal(err)
 		}
 		return

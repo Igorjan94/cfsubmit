@@ -57,7 +57,7 @@ func WriteSettings(settings *CFSettings) error {
 	return nil
 }
 
-func UpdateIdCodes() error {
+func UpdateSettings() error {
 	settings, err := ReadSettings()
 
 	req, err := http.NewRequest("GET", "http://codeforces.com/problemset/submit", nil)
