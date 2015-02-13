@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/cnt0/cfapi"
 	"github.com/cnt0/cfsubmit"
 )
 
@@ -34,7 +35,7 @@ var (
 func ArchiveSubmissions(dir string) error {
 	return filepath.Walk(dir, func(path1 string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			if submission, err := cfsubmit.NewSubmission(info.Name()); err == nil {
+			if submission, err := cfapi.NewSubmission(info.Name()); err == nil {
 				os.Mkdir(strconv.Itoa(submission.ContestID), os.ModeDir|os.ModePerm)
 				os.Rename(info.Name(), path.Join(strconv.Itoa(submission.ContestID), info.Name()))
 			}
@@ -50,7 +51,7 @@ func ArchiveSubmissionsTGZ(dir string) error {
 
 	err := filepath.Walk(dir, func(path1 string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			if submission, err := cfsubmit.NewSubmission(info.Name()); err == nil {
+			if submission, err := cfapi.NewSubmission(info.Name()); err == nil {
 
 				body, err := ioutil.ReadFile(info.Name())
 				if err != nil {

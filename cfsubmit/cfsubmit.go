@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cnt0/cfapi"
+	"github.com/cnt0/cfapi/user"
 	"github.com/cnt0/cfsubmit"
 )
 
@@ -49,7 +51,7 @@ func init() {
 		os.Exit(0)
 	}
 
-	submission, err := cfsubmit.NewSubmission(path.Base(os.Args[1]))
+	submission, err := cfapi.NewSubmission(path.Base(os.Args[1]))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
@@ -145,7 +147,7 @@ func main() {
 
 				//check out your last 5 submissions and search the first one with
 				//given vontestId and problemId
-				submissions, err := cfsubmit.UserStatus(CFAuthData.Handle, 5)
+				submissions, err := user.Status(CFAuthData.Handle, 1, 5)
 				if err == nil {
 					for _, s := range submissions {
 						if s.ContestID == contestId && s.Problem.Index == problemId {
@@ -156,7 +158,7 @@ func main() {
 								break
 							}
 
-							if s.Verdict != cfsubmit.VerTesting && s.Verdict != cfsubmit.VerMissing {
+							if s.Verdict != cfapi.VerTesting && s.Verdict != cfapi.VerMissing {
 
 								//ok, we've got some useful verdict
 								fmt.Printf("\nVerdict: %s | Tests passed: %d | Time: %s | Memory: %s\n",
