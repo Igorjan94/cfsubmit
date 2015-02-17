@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cnt0/cfapi"
@@ -38,6 +40,7 @@ var (
 var CFAuthData *cfsubmit.CFSettings
 
 func init() {
+
 	//load settings from json
 	var err error
 	CFAuthData, err = cfsubmit.ReadSettings()
@@ -51,7 +54,13 @@ func init() {
 		os.Exit(0)
 	}
 
-	submission, err := cfapi.NewSubmission(path.Base(os.Args[1]))
+	var submission *cfapi.Submission
+	if runtime.GOOS == "windows" {
+		submission, err = cfapi.NewSubmission(path.Base(strings.Replace(os.Args[1], "\\", "/", -1)))
+	} else {
+		submission, err = cfapi.NewSubmission(path.Base(os.Args[1]))
+	}
+
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
@@ -102,6 +111,7 @@ func createMultipartForm() (io.Reader, string, error) {
 }
 
 func main() {
+
 	//request url
 	reqUrl := "http://codeforces." + CFAuthData.CFDomain +
 		"/contest/" + strconv.Itoa(contestId) +
