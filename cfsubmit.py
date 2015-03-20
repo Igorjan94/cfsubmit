@@ -9,7 +9,7 @@ import time
 # Edit these four variables according to your needs:
 x_user = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 csrf_token = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
-cf_domain = "ru"  # "ru" if you prefer codeforces.ru
+cf_domain = "com"  # "ru" if you prefer codeforces.ru
 ext_id = {
     "cpp":   "16",
     "cs":    "29",
