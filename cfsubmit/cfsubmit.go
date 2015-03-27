@@ -136,8 +136,7 @@ func main() {
 	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
 	req.AddCookie(&http.Cookie{Name: "X-User", Value: CFAuthData.XUser})
 
-	timeNow := time.Now()
-	fmt.Printf("Now: %v\n", timeNow)
+	timeNow := time.Now().Add(-1 * time.Minute)
 
 	//send request
 	if _, err := http.DefaultClient.Do(req); err != nil {
@@ -157,7 +156,7 @@ func main() {
 
 				//check out your last 5 submissions and search the first one with
 				//given vontestId and problemId
-				submissions, err := user.Status(CFAuthData.Handle, 1, 5)
+				submissions, err := user.Status(CFAuthData.Handle, nil, 1, 5)
 				if err == nil {
 					for _, s := range submissions {
 						if s.ContestID == contestId && s.Problem.Index == problemId {

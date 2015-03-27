@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cnt0/cfapi"
 	"gopkg.in/xmlpath.v2"
 )
 
@@ -18,6 +19,7 @@ var (
 type CFSettings struct {
 	XUser        string            `json:"X-User"`
 	CSRF         string            `json:"CSRF-Token"`
+	APIAuth      cfapi.AuthToken   `json:"API-Auth"`
 	Handle       string            `json:"Handle"`
 	CFDomain     string            `json:"CF-Domain"`
 	CheckResults bool              `json:"Check-Results"`
