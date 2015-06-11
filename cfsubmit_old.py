@@ -1,15 +1,11 @@
 #!/usr/bin/python
 
 import os
-import requests
 import sys
 import itertools
-import time
+
 
 # Edit these four variables according to your needs:
-x_user = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-csrf_token = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
-cf_domain = "ru"  # "com" if you prefer codeforces.com
 ext_id = {
     "cpp":   "42",
     "cs":    "29",
@@ -84,21 +80,5 @@ if extension not in ext_id:
     print("Unknown extension. Please check 'ext_id' variable")
     sys.exit()
 
-
-parts = {
-    "csrf_token":            csrf_token,
-    "action":                "submitSolutionFormSubmitted",
-    "submittedProblemIndex": problem_index,
-    "source":                open(sys.argv[1], "rb"),
-    "programTypeId":         ext_id[extension],
-    "sourceFile":            "",
-    "_tta":                  "222"
-}
-
-submit_addr = "http://codeforces.%s/%s/%s/submit" % (
-    cf_domain, "gym" if is_gym(contest_id) else "contest", contest_id)
-
-requests.post(submit_addr, params={"csrf_token": csrf_token},
-              files=parts, cookies={"X-User": x_user})
-
-print("Solution sent. Current time is " + time.strftime("%H:%M:%S"))
+submit_addr = "http://codeforces.com/{}/{}/submit".format(
+    "gym" if is_gym(contest_id) else "contest", contest_id)
