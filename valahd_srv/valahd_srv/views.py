@@ -10,6 +10,7 @@ from flask import g
 
 from valahd_srv import app
 
+
 def login():
     g.browser.get(g.default_url)
     g.browser.get(g.login_url)
@@ -20,12 +21,14 @@ def login():
         g.browser.find_element_by_id("password").send_keys(g.password)
         g.browser.find_element_by_id("remember").click()
         g.browser.find_element_by_class_name("submit").submit()
-    
+
 
 @app.route('/init_contest')
 def init_contest():
-    g.submit_url = 'http://codeforces.com/contest/{}/submit'.format(request.form['num'])
+    g.submit_url = 'http://codeforces.com/contest/{}/submit'.format(
+        request.form['num'])
     return "contest {} initialized".format(g.submit_url)
+
 
 @app.route('/init_server')
 def init_server():
@@ -33,6 +36,7 @@ def init_server():
     g.password = request.form['password']
     login()
     return "server initialized"
+
 
 @app.route('/submit')
 def submit():
@@ -50,12 +54,13 @@ def submit():
     # select language
     select = Select(g.browser.find_element_by_name('programTypeId'))
     select.select_by_value(request.form['lang'])
-    
+
     # paste source
     # note this javascript requires _newest_ browser
     # because of String.raw function
-    g.browser.execute_script("editAreaLoader.setValue('sourceCodeTextarea', String.raw`{}`)".format(text))
-    
+    g.browser.execute_script(
+        "editAreaLoader.setValue('sourceCodeTextarea', String.raw`{}`)".format(request.form['text']))
+
     # submit
     g.browser.find_element_by_class_name('submit').submit()
     time.sleep(1)
