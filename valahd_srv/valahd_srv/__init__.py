@@ -10,8 +10,9 @@ app = Flask(__name__)
 ctx = app.app_context()
 ctx.push()
 
-g.browser = webdriver.Chrome()
-time.sleep(2)
+# g.browser = webdriver.Chrome()
+g.browser = webdriver.PhantomJS()
+g.browser.set_window_size(10200, 10200)
 
 g.handle = ''
 g.password = ''
