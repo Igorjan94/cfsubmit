@@ -8,7 +8,6 @@ def init_server(handle, password):
         'password': password,
     }
     requests.get("http://localhost:5555/init_server", data=data)
-    time.sleep(2)
 
 
 def init_contest(contest_id):
@@ -16,7 +15,6 @@ def init_contest(contest_id):
         'num': contest_id,
     }
     requests.get("http://localhost:5555/init_contest", data=data)
-    time.sleep(2)
 
 def submit(problem_id, lang, text):
     data = {
@@ -25,11 +23,10 @@ def submit(problem_id, lang, text):
         'text': text,
     }
     requests.post("http://localhost:5555/submit", data=data)
-    time.sleep(2)
 
 
 # should be used like this:
 if __name__ == '__main__':
     init_server('xxx', 'yyy')
     init_contest('550')
-    submit('A', '41', 'Haghani();')
+    submit('A', '41', ''.join(open('550A.py', 'r').readlines()))
