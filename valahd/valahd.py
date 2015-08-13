@@ -1,5 +1,10 @@
+#!/usr/bin/env python3
+
+from urllib.parse import urljoin
+
 import requests
-import time
+
+from urls import SERVER_ADDR, INIT_SERVER_PART, SUBMIT_PART, INIT_CONTEST_PART
 
 
 def init_server(handle, password):
@@ -7,14 +12,15 @@ def init_server(handle, password):
         'handle': handle,
         'password': password,
     }
-    requests.get("http://localhost:5555/init_server", data=data)
+    requests.get(urljoin(SERVER_ADDR, INIT_SERVER_PART), data=data)
 
 
 def init_contest(contest_id):
     data = {
         'num': contest_id,
     }
-    requests.get("http://localhost:5555/init_contest", data=data)
+    requests.get(urljoin(SERVER_ADDR, INIT_CONTEST_PART), data=data)
+
 
 def submit(problem_id, lang, text):
     data = {
@@ -22,7 +28,7 @@ def submit(problem_id, lang, text):
         'lang': lang,
         'text': text,
     }
-    requests.post("http://localhost:5555/submit", data=data)
+    requests.post(urljoin(SERVER_ADDR, SUBMIT_PART), data=data)
 
 
 # should be used like this:
