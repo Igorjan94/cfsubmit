@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 import time
 import unittest
+
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+
+from urls import CF_LOGIN_URL
 
 
 class TestCodeforces(unittest.TestCase):
 
     def setUp(self):
         self.browser = webdriver.Firefox()
-        self.creds = {
-            "handle": "CountZero",
+        self.credentials = {
+            "handle": 'xxx',
             "password": "yyy",
         }
 
@@ -19,10 +22,10 @@ class TestCodeforces(unittest.TestCase):
         self.browser.close()
 
     def test_login_codeforces(self):
-        self.browser.get("http://codeforces.com/enter")
-        self.browser.find_element_by_id("handle").send_keys(self.creds["handle"])
+        self.browser.get(CF_LOGIN_URL)
+        self.browser.find_element_by_id("handle").send_keys(self.credentials["handle"])
         self.browser.find_element_by_id("password").send_keys(
-            self.creds["password"])
+            self.credentials["password"])
         el = self.browser.find_element_by_id("remember")
         el.click()
 
@@ -30,7 +33,7 @@ class TestCodeforces(unittest.TestCase):
         time.sleep(5)
 
         self.assertIn(
-            self.creds["handle"],
+            self.credentials["handle"],
             self.browser.find_element_by_xpath("//div[@id='header']").text
         )
 
