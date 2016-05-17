@@ -2,7 +2,7 @@ from urllib.parse import urljoin
 
 # local server urls
 SERVER_HOST = 'localhost'
-SERVER_PORT = 5555
+SERVER_PORT = 8200
 SERVER_ADDR = 'http://{}:{}/'.format(SERVER_HOST, SERVER_PORT)
 
 # local server routes
